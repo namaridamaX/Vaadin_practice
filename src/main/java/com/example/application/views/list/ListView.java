@@ -23,8 +23,8 @@ public class ListView extends VerticalLayout { // 垂直にレイアウトを配
     CrmService service; // サービスの定義
 
     //コンストラクター
-    public ListView(CrmService crmService) {
-        this.service = crmService;
+    public ListView(CrmService service) {
+        this.service = service;
         addClassName("list-view");
         setSizeFull(); // 最大化
         configureGrid(); // グリッドを初期化するメソッド
@@ -33,6 +33,7 @@ public class ListView extends VerticalLayout { // 垂直にレイアウトを配
         //add(getToolbar(), grid);
         add(getToolbar(), getContent());
         updateList(); // リストを更新するメソッド
+        closeEditor(); // エディターを閉じるメソッド
     }
 
     private void configureGrid() {
@@ -42,9 +43,13 @@ public class ListView extends VerticalLayout { // 垂直にレイアウトを配
         grid.addColumn(contact -> contact.getStatus().getName()).setHeader("Status");
         grid.addColumn(contact -> contact.getCompany().getName()).setHeader("Company");
         grid.getColumns().forEach(col -> col.setAutoWidth(true));
+
+        // グリッドの行をクリックしたときに、editContact()を呼び出す
+        grid.asSingleSelect().addValueChangeListener(event ->
+                editContact(event.getValue()));
     }
 
-    private Component getContent() {
+    private HorizontalLayout getContent() {
         HorizontalLayout content = new HorizontalLayout(grid, form);
         content.setFlexGrow(2, grid); // グリッドにフォームの２倍のスペースが必要であることを指定
         content.setFlexGrow(1, form);
@@ -54,8 +59,11 @@ public class ListView extends VerticalLayout { // 垂直にレイアウトを配
     }
 
     private void configureForm() {
-        form = new ContactForm(Collections.emptyList(), Collections.emptyList());
+        form = new ContactForm(service.findAllCompanies(), service.findAllStatuses());
         form.setWidth("25em");
+        form.addSaveListener(this::saveContact);
+        form.addDeleteListener(this::deleteContact);
+        form.addCloseListener(e -> closeEditor());
     }
 
     private HorizontalLayout getToolbar() {
@@ -68,6 +76,7 @@ public class ListView extends VerticalLayout { // 垂直にレイアウトを配
         filterText.addValueChangeListener(e -> updateList());
 
         Button addContactButton = new Button("Add contact");
+        addContactButton.addClickListener(click -> addContact());
 
         var toolbar = new HorizontalLayout(filterText, addContactButton);
         toolbar.addClassName("toolbar");
@@ -77,5 +86,47 @@ public class ListView extends VerticalLayout { // 垂直にレイアウトを配
     private void updateList() {
         // filterTextの値を使って、連絡先を検索する
         grid.setItems(service.findAllContacts(filterText.getValue()));
+    }
+
+    // 選択されたcontactがnullじゃなかった場合、フォームを表示する
+    public void editContact(Contact contact) {
+        if (contact == null) {
+            closeEditor();
+        } else {
+            form.setContact(contact);
+            form.setVisible(true);
+            addClassName("editing");
+        }
+    }
+
+    // エディターを閉じるメソッド
+    // 初期化した時に呼ばれる
+    private void closeEditor() {
+        form.setContact(null);
+        form.setVisible(false);
+        removeClassName("editing");
+    }
+
+    // Add Contactボタンを押したときに呼ばれる
+    // editContact()に新しいContactを渡すことでフォームを初期化する
+    private void addContact() {
+        grid.asSingleSelect().clear();
+        editContact(new Contact());
+    }
+
+    // フォームのSaveボタンを押したときに呼ばれる
+    // service.saveContact()を呼び出して、データベースに新しいContactを保存する
+    private void saveContact(ContactForm.SaveEvent event) {
+        service.saveContact(event.getContact());
+        updateList();
+        closeEditor();
+    }
+
+    // フォームのDeleteボタンを押したときに呼ばれる
+    // service.deleteContact()を呼び出して、データベースからContactを削除する
+    private void deleteContact(ContactForm.DeleteEvent event) {
+        service.deleteContact(event.getContact());
+        updateList();
+        closeEditor();
     }
 }
