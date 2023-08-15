@@ -14,7 +14,7 @@ import com.vaadin.flow.router.Route;
 
 import java.util.Collections;
 
-@Route(value = "")
+@Route(value = "", layout = MainLayout.class)
 @PageTitle("Contacts | Vaadin CRM")
 public class ListView extends VerticalLayout { // 垂直にレイアウトを配置する
     Grid<Contact> grid = new Grid<>(Contact.class); // グリッド（表）の定義
