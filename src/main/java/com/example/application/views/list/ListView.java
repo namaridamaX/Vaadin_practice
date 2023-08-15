@@ -1,6 +1,7 @@
 package com.example.application.views.list;
 
 import com.example.application.data.entity.Contact;
+import com.example.application.data.service.CrmService;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
@@ -19,9 +20,11 @@ public class ListView extends VerticalLayout { // 垂直にレイアウトを配
     Grid<Contact> grid = new Grid<>(Contact.class); // グリッド（表）の定義
     TextField filterText = new TextField(); // テキスト用フィールドの確保
     ContactForm form; // コンタクトフォームの定義
+    CrmService service; // サービスの定義
 
     //コンストラクター
-    public ListView() {
+    public ListView(CrmService crmService) {
+        this.service = crmService;
         addClassName("list-view");
         setSizeFull(); // 最大化
         configureGrid(); // グリッドを初期化するメソッド
@@ -29,6 +32,7 @@ public class ListView extends VerticalLayout { // 垂直にレイアウトを配
 
         //add(getToolbar(), grid);
         add(getToolbar(), getContent());
+        updateList(); // リストを更新するメソッド
     }
 
     private void configureGrid() {
@@ -59,10 +63,19 @@ public class ListView extends VerticalLayout { // 垂直にレイアウトを配
         filterText.setClearButtonVisible(true);
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
 
+        // filterTextに変更が入った際に、updateList()を呼び出す
+        // リストを更新するメソッド
+        filterText.addValueChangeListener(e -> updateList());
+
         Button addContactButton = new Button("Add contact");
 
         var toolbar = new HorizontalLayout(filterText, addContactButton);
         toolbar.addClassName("toolbar");
         return toolbar;
+    }
+
+    private void updateList() {
+        // filterTextの値を使って、連絡先を検索する
+        grid.setItems(service.findAllContacts(filterText.getValue()));
     }
 }
