@@ -11,18 +11,24 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
+import java.util.Collections;
+
 @Route(value = "")
 @PageTitle("Contacts | Vaadin CRM")
-public class ListView extends VerticalLayout {
-    Grid<Contact> grid = new Grid<>(Contact.class);
-    TextField filterText = new TextField();
+public class ListView extends VerticalLayout { // 垂直にレイアウトを配置する
+    Grid<Contact> grid = new Grid<>(Contact.class); // グリッド（表）の定義
+    TextField filterText = new TextField(); // テキスト用フィールドの確保
+    ContactForm form; // コンタクトフォームの定義
 
+    //コンストラクター
     public ListView() {
         addClassName("list-view");
-        setSizeFull();
-        configureGrid();
+        setSizeFull(); // 最大化
+        configureGrid(); // グリッドを初期化するメソッド
+        configureForm(); // フォームを初期化するメソッド
 
-        add(getToolbar(), grid);
+        //add(getToolbar(), grid);
+        add(getToolbar(), getContent());
     }
 
     private void configureGrid() {
@@ -32,6 +38,20 @@ public class ListView extends VerticalLayout {
         grid.addColumn(contact -> contact.getStatus().getName()).setHeader("Status");
         grid.addColumn(contact -> contact.getCompany().getName()).setHeader("Company");
         grid.getColumns().forEach(col -> col.setAutoWidth(true));
+    }
+
+    private Component getContent() {
+        HorizontalLayout content = new HorizontalLayout(grid, form);
+        content.setFlexGrow(2, grid); // グリッドにフォームの２倍のスペースが必要であることを指定
+        content.setFlexGrow(1, form);
+        content.addClassNames("content");
+        content.setSizeFull();
+        return content;
+    }
+
+    private void configureForm() {
+        form = new ContactForm(Collections.emptyList(), Collections.emptyList());
+        form.setWidth("25em");
     }
 
     private HorizontalLayout getToolbar() {
