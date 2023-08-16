@@ -1,8 +1,10 @@
 package com.example.application.views.list;
 
+import com.example.application.security.SecurityService;
 import com.example.application.views.list.ListView;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
+import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -12,8 +14,10 @@ import com.vaadin.flow.router.RouterLink;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 
 public class MainLayout extends AppLayout{
+    private final SecurityService securityService;
 
-    public MainLayout() {
+    public MainLayout(SecurityService securityService) {
+        this.securityService = securityService;
         createHeader();
         createDrawer();
     }
@@ -24,11 +28,15 @@ public class MainLayout extends AppLayout{
                 LumoUtility.FontSize.LARGE,
                 LumoUtility.Margin.MEDIUM);
 
+        String u = securityService.getAuthenticatesUser().getUsername();
+        Button logout = new Button("Log out" + u, e -> securityService.logout());
+
         // DrawerToggleは、サイドバーの表示/非表示を切り替えるボタン
-        var header = new HorizontalLayout(new DrawerToggle(), logo);
+        var header = new HorizontalLayout(new DrawerToggle(), logo, logout);
 
         // 垂直軸に沿って中央に配置
         header.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
+        header.expand(logo);
         header.setWidthFull();
         header.addClassNames(
                 LumoUtility.Padding.Vertical.NONE,
